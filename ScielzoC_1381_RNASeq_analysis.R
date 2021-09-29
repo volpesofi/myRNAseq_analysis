@@ -1874,6 +1874,7 @@ enrichr3D
 
 
 # Write excels files
+
 for (j in c("fdr_up","fdr_down","fdr_both")){
     filename = paste(dir,j,".xlsx",sep="")
     write.xlsx(x = enrichr3D[[j]], file = filename, asTable = T)
@@ -1905,4 +1906,204 @@ dedup_genes_ensemble_t = genes_ensemble_t[!duplicated(genes_ensemble_t[c("extern
 genes_entrez = dedup_genes_ensemble_t$entrezgene_id
 # ReactomePathways #
 ReactomePA <- enrichPathway(gene=genes_entrez, pvalueCutoff = 0.1, readable=TRUE)
+
+
+## heatmap genes
+Genes = c("AICDA", "SELL", "IGHG3", "CCL22", "CXCR3", "CD180", "MYC", "LMNA", "HCLS1","PIM3", "IGHM", "BCL2",
+          "BIRC7")
+QPC_validated = c("AICDA", "SELL", "CCL22", "CXCR3", "MYC", "PIM3", "HCLS1", "BCL2")
+gene_3D_adaptation = c("CXCR5", "CD79A", "CD79B", "IL2RA", "IL2RB")
+
+y <- DGEList(counts=fCountsData, genes = fCountsAnnotation)
+fCountsRPKM = rpkm(y, log=T, gene.length=y$genes$Length)
+
+library(plyr)
+#annotation_column = annotation_column.bk
+#annotation_column.bk = annotation_column
+annotation_column$condition = revalue(annotation_column$condition, 
+                                      c("PTs2Dday7"="PTs_2D", "PTs3Dday7"="PTs_3D", "PTsbasale" = "PTs_basal"))
+mycolors_c <- col_samples;     names(mycolors_c) = levels(annotation_column$condition)
+ann_colors = list(
+  condition = mycolors_c
+)
+HPv <- pheatmap::pheatmap(fCountsRPKM[Genes,],
+                          scale = 'row',
+                          annotation_col = annotation_column,
+                          annotation_colors = ann_colors, 
+                          cluster_rows = T, 
+                          cluster_cols = T, 
+                          cutree_cols  = 3,
+                          cutree_row  = 2,
+                          show_rownames = T,
+                          show_colnames = F,
+                          cellwidth=15, cellheight=15,
+                          fontsize = 12, fontsize_row = 12, fontsize_col = 12, 
+                          display_numbers = F,
+                          col=colors,
+                          filename = paste(dir,'HeatmapAS_genesTableTopGeneList.pdf',sep=''))
+
+HPv <- pheatmap::pheatmap(fCountsRPKM[gene_3D_adaptation,],
+                          scale = 'row',
+                          annotation_col = annotation_column,
+                          annotation_colors = ann_colors, 
+                          cluster_rows = T, 
+                          cluster_cols = T, 
+                          cutree_cols  = 3,
+                          cutree_row  = 2,
+                          show_rownames = T,
+                          show_colnames = F,
+                          cellwidth=15, cellheight=15,
+                          fontsize = 12, fontsize_row = 12, fontsize_col = 12, 
+                          display_numbers = F,
+                          col=colors,
+                          filename = paste(dir,'HeatmapAS_genes3Dadaptation.pdf',sep=''))
+
+
+#                          #labels_col= str_remove(colnames(fCountsRPKM), "MECPGK"),
+#                          filename = paste(heatmap_dir_as,'HeatmapAS_genesTableTopGeneList.pdf',sep=''))
+dev.off()
+HPv <- pheatmap::pheatmap(fCountsRPKM[QPC_validated,],
+                          scale = 'row',
+                          annotation_col = annotation_column,
+                          annotation_colors = ann_colors, 
+                          cluster_rows = T, 
+                          cluster_cols = T, 
+                          cutree_cols  = 3,
+                          cutree_row  = 2,
+                          show_rownames = T,
+                          show_colnames = F,
+                          cellwidth=15, cellheight=15,
+                          fontsize = 12, fontsize_row = 12, fontsize_col = 12, 
+                          display_numbers = F,
+                          col=colors,
+                          filename = paste(dir,'HeatmapAS_genesTableTopGeneList_QPC_validated.pdf',sep=''))
+                          #labels_col= str_remove(colnames(fCountsRPKM), "MECPGK"),
+                        #  filename = paste(heatmap_dir_as,'HeatmapAS_genesTableTopGeneList_QPC_validated.pdf',sep=''))
+
+c1 = "PTs3Dday7"; c2 = "PTs2Dday7"
+samples= as.character(metadata[metadata$condition %in% c(c1,c2),]$SampleID)
+annotation_column2 = annotation_column
+annotation_column2$condition = droplevels(annotation_column2$condition, exclude = 'PTs_basal')
+ann_colors2 = list(
+  condition = mycolors_c[1:2]
+)
+HPv <- pheatmap::pheatmap(fCountsRPKM[Genes,samples],
+                          scale = 'row',
+                          annotation_col = annotation_column2,
+                          annotation_colors = ann_colors2, 
+                          cluster_rows = T, 
+                          cluster_cols = T, 
+                          cutree_cols  = 2,
+                          cutree_row  = 2,
+                          show_rownames = T,
+                          show_colnames = F,
+                          cellwidth=15, cellheight=15,
+                          fontsize = 12, fontsize_row = 12, fontsize_col = 12, 
+                          display_numbers = F,
+                          col=colors,
+                          filename = paste(dir,'HeatmapSS_genesTableTopGeneList_',c1,'_',c2,'.pdf',sep=''))
+#,
+#                          #labels_col= str_remove(colnames(fCountsRPKM), "MECPGK"),
+#                          filename = paste(dir,'HeatmapSS_genesTableTopGeneList_',c1,'_',c2,'.pdf',sep=''))
+
+HPv <- pheatmap::pheatmap(fCountsRPKM[QPC_validated,samples],
+                          scale = 'row',
+                          annotation_col = annotation_column2,
+                          annotation_colors = ann_colors2, 
+                          cluster_rows = T, 
+                          cluster_cols = T, 
+                          cutree_cols  = 2,
+                          cutree_row  = 2,
+                          show_rownames = T,
+                          show_colnames = F,
+                          cellwidth=15, cellheight=15,
+                          fontsize = 12, fontsize_row = 12, fontsize_col = 12, 
+                          display_numbers = F,
+                          col=colors,
+                          #labels_col= str_remove(colnames(fCountsRPKM), "MECPGK"),
+                          filename = paste(dir,'HeatmapSS_genesTableTopGeneList_QPC_validated_',c1,'_',c2,'.pdf',sep=''))
+
+
+
+HPv <- pheatmap::pheatmap(fCountsRPKM[gene_3D_adaptation,samples],
+                          scale = 'row',
+                          annotation_col = annotation_column2,
+                          annotation_colors = ann_colors2, 
+                          cluster_rows = T, 
+                          cluster_cols = T, 
+                          cutree_cols  = 2,
+                          cutree_row  = 2,
+                          show_rownames = T,
+                          show_colnames = F,
+                          cellwidth=15, cellheight=15,
+                          fontsize = 12, fontsize_row = 12, fontsize_col = 12, 
+                          display_numbers = F,
+                          col=colors,
+                          #labels_col= str_remove(colnames(fCountsRPKM), "MECPGK"),
+                          filename = paste(dir,'HeatmapSS_genes3Dadapt_QPC_validated_',c1,'_',c2,'.pdf',sep=''))
+
+samples
+
+gene_3D_adaptation
+row.names(fCountsRPKM)[grepl(pattern = "IL2RB", row.names(fCountsRPKM))]
+
+
+
+
+# save FDR genes in a list
+fdrUP_top = list()
+
+alpha = 0.05
+LFC_t = 1
+
+fdrUP_top = lapply(names(dgeResults),
+                   function(x) row.names(dgeResults[[x]])[dgeResults[[x]]$padj <= alpha & 
+                                                        !is.na(dgeResults[[x]]$padj)&
+                                                        dgeResults[[x]]$log2FoldChange > LFC_t])
+names(fdrUP_top)= names(dgeResults)       
+
+fdrDW_top = list()
+fdrDW_top = lapply(names(dgeResults), 
+               function(x) row.names(dgeResults[[x]])[dgeResults[[x]]$padj <= alpha & 
+                                                        !is.na(dgeResults[[x]]$padj)&
+                                                        dgeResults[[x]]$log2FoldChange < -LFC_t])
+names(fdrDW_top)= names(dgeResults)
+
+length(fdrUP_top$condition_PTs3Dday7_vs_PTs2Dday7)
+
+shared_3D_top = list(UP = intersect(fdrUP_top[[2]], fdrUP_top[[3]]),
+                     DW = intersect(fdrDW_top[[2]], fdrDW_top[[3]]))
+g3D_top = list(UP = fdrUP_top[[3]], DW = fdrDW_top[[3]])
+lengths(shared_3D_top)
+length(unlist(shared_3D_top))
+gene_3D_adaptation %in% as.character(unlist(shared_3D_top))
+
+dgeResults[[3]]["IL2RB",]
+
+gene_3D_adaptation
+row.names(fCountsRPKM)[grepl(pattern = "IL2RB", row.names(fCountsRPKM))]
+
+fCountsRPKM["IL2RB",]
+
+
+dev.off()
+dge = dgeResults$condition_PTs3Dday7_vs_PTs2Dday7
+sort(dge$
+
+HPv <- pheatmap::pheatmap(fCountsRPKM[,samples],
+                          scale = 'row',
+                          annotation_col = annotation_column2,
+                          annotation_colors = ann_colors2, 
+                          cluster_rows = T, 
+                          cluster_cols = T, 
+                          cutree_cols  = 2,
+                          cutree_row  = 2,
+                          show_rownames = T,
+                          show_colnames = F,
+                          cellwidth=15, cellheight=15,
+                          fontsize = 12, fontsize_row = 12, fontsize_col = 12, 
+                          display_numbers = F,
+                          col=colors)#,
+                          #labels_col= str_remove(colnames(fCountsRPKM), "MECPGK"),
+                          #filename = paste(dir,'HeatmapSS_genes3Dadapt_QPC_validated_',c1,'_',c2,'.pdf',sep=''))
 
